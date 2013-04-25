@@ -11,7 +11,7 @@ module.exports = function(grunt) {
 	var path = require('path');
 	var crypto = require('crypto');
 
-	var reghtml = new RegExp(/<(?:img|link|source|script).*\b(?:href|src)=['"]([^'"\{]+)['"].*\/?>/ig);
+	var reghtml = new RegExp(/<(?:img|link|source|script).*\/?>/ig);
 
 	var regcss = new RegExp(/url\(([^)]+)\)/ig);
 
@@ -55,8 +55,14 @@ module.exports = function(grunt) {
 
 	function html(content, filename, relativeTo) {
         var self = this;
-		return content.replace(reghtml, function(match, resource) {
-			return match.replace(resource, cdnUrl.call(self, resource, filename, relativeTo));
+    	var options = this.options();
+		var attrs = ['src', 'href'].concat(options.includeAttributes || []);
+		var reghtmlattr = new RegExp('(?:' + attrs.join('|') + ')=[\'"]([^\'"\{]+)[\'"]', 'ig');
+
+		return content.replace(reghtml, function(tag) {
+      		return tag.replace(reghtmlattr, function(match, resource) {
+        		return match.replace(resource, cdnUrl.call(self, resource, filename, relativeTo));
+      		});
 		});
 	};
 
